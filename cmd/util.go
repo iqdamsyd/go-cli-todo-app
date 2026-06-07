@@ -121,7 +121,7 @@ func DeleteTodo(id int) error {
 	return nil
 }
 
-func MarkTodoAsCompleted(id int) error {
+func MarkTodoAsDone(id int) error {
 	// Implement the logic to mark a todo as completed by updating its Completed field to true.
 	// Use the UpdateTodo function to update the todo in the JSON file.
 	// Handle any errors that may occur during this process.
@@ -217,6 +217,13 @@ func OrderTodosByDeadline(todos []Todo) []Todo {
 
 	for i := 0; i < len(sortedTodos)-1; i++ {
 		for j := 0; j < len(sortedTodos)-i-1; j++ {
+			// Handle cases where deadline is empty (consider them as having the lowest priority)
+			if sortedTodos[j].Deadline == "" {
+				sortedTodos[j].Deadline = NoDeadline // Assign a far future date for sorting
+			}
+			if sortedTodos[j+1].Deadline == "" {
+				sortedTodos[j+1].Deadline = NoDeadline
+			}
 			if sortedTodos[j].Deadline > sortedTodos[j+1].Deadline {
 				sortedTodos[j], sortedTodos[j+1] = sortedTodos[j+1], sortedTodos[j]
 			}

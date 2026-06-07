@@ -2,6 +2,8 @@ package cmd
 
 import "time"
 
+const NoDeadline = "9999-12-31"
+
 type Todo struct {
 	ID          int        `json:"id"`
 	Description string     `json:"description"`

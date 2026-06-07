@@ -10,6 +10,8 @@ import (
 var sortby string
 var search string
 var status string
+var details bool
+var complete bool
 
 var listCmd = &cobra.Command{
 	Use:   "list",
@@ -44,6 +46,8 @@ var listCmd = &cobra.Command{
 			orderedTodos = FilterTodosByStatus(orderedTodos, status)
 		}
 
+		completed := []Todo{}
+
 		for _, todo := range orderedTodos {
 			if todo.DeletedAt != nil {
 				continue
@@ -53,18 +57,25 @@ var listCmd = &cobra.Command{
 				continue
 			}
 
-			status := "Pending"
 			if todo.Completed {
-				status = "Completed"
+				completed = append(completed, todo)
+				continue
 			}
 
-			if todo.Deadline == "" {
-				todo.Deadline = "No deadline"
-			}
-
-			fmt.Printf("ID: %d\nDescription: %s\nPriority: %s\nDeadline: %s\nStatus: %s\nCreated At: %s\nUpdated At: %s\n\n",
-				todo.ID, todo.Description, todo.Priority, todo.Deadline, status, todo.CreatedAt.Format("2006-01-02 15:04:05"), todo.UpdatedAt.Format("2006-01-02 15:04:05"))
+			printTodo(todo, details)
 		}
+
+		if complete && len(completed) == 0 {
+			fmt.Println("No completed todos found.")
+			return
+		}
+		if complete && len(completed) > 0 {
+			fmt.Println("------- COMPLETED -------")
+			for _, todo := range completed {
+				printTodo(todo, details)
+			}
+		}
+
 	},
 }
 
@@ -74,4 +85,33 @@ func init() {
 	listCmd.Flags().StringVarP(&sortby, "sortby", "s", "updated", "Sort todos by (updated, priority, deadline)")
 	listCmd.Flags().StringVarP(&search, "search", "q", "", "Search todos by description")
 	listCmd.Flags().StringVarP(&status, "status", "t", "", "Filter todos by status (pending, completed)")
+	listCmd.Flags().BoolVarP(&details, "details", "d", false, "Display todos with details")
+	listCmd.Flags().BoolVarP(&complete, "complete", "c", false, "Display completed todos")
+}
+
+func printTodo(todo Todo, details bool) {
+	status := "pending"
+	if todo.Completed {
+		status = "completed"
+	}
+
+	if todo.Deadline == NoDeadline {
+		todo.Deadline = "-"
+	}
+
+	if details {
+		printTodoDetails(todo, status)
+	} else {
+		printTodoSummary(todo, status)
+	}
+}
+
+func printTodoDetails(todo Todo, status string) {
+	fmt.Printf("ID          : %d\nDescription : %s\nPriority    : %s\nStatus      : %s\nDeadline    : %s\nCreated At  : %s\nUpdated At  : %s\n\n",
+		todo.ID, todo.Description, todo.Priority, status, todo.Deadline, todo.CreatedAt.Format("2006-01-02 15:04:05"), todo.UpdatedAt.Format("2006-01-02 15:04:05"))
+}
+
+func printTodoSummary(todo Todo, status string) {
+	fmt.Printf("%d | %s | %s | %s | %s\n",
+		todo.ID, todo.Description, todo.Priority, status, todo.Deadline)
 }
